@@ -13,9 +13,11 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
+import com.example.learnizone.auth.AuthManager;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+import com.bumptech.glide.Glide;
 
 public class ProfileFragment extends Fragment {
 
@@ -58,41 +60,66 @@ public class ProfileFragment extends Fragment {
     }
 
     private void loadUserData() {
-        // Dans une vraie application, ces données viendraient d'une source de données (préférences, base de données, API)
-        profileName.setText("Alex Johnson");
-        profileEmail.setText("alex.johnson@example.com");
+        AuthManager authManager = AuthManager.getInstance(requireContext());
+
+        // Vérification de la connexion
+        if (!authManager.isLoggedIn()) {
+            Toast.makeText(requireContext(), "Utilisateur non connecté", Toast.LENGTH_SHORT).show();
+            navigateToLogin();
+            return;
+        }
+
+        String fullName = authManager.getUserName();
+        String email = authManager.getUserEmail();
+
+        // Chargement des données utilisateur
+        if (fullName != null && !fullName.isEmpty()) {
+            profileName.setText(fullName);
+        }
+
+        if (email != null && !email.isEmpty()) {
+            profileEmail.setText(email);
+        }
+
+        // Données fictives pour la démo
         coursesCount.setText("12");
         hoursCount.setText("45");
         streakCount.setText("7");
 
-        // Charger l'image de profil avec Glide
-        // Glide.with(this)
-        //     .load("https://images.unsplash.com/photo-1581091226825-a6a2a5aee158")
-        //     .placeholder(R.drawable.placeholder_profile)
-        //     .circleCrop()
-        //     .into(profileImage);
+        String profilePicUrl = authManager.getProfilePicUrl();
+
+        // Chargement de l'image de profil avec Glide
+        if (profilePicUrl != null && !profilePicUrl.isEmpty()) {
+            Glide.with(this)
+                    .load(profilePicUrl)
+                    .placeholder(R.drawable.placeholder_profile) // image par défaut
+                    .error(R.drawable.error_profile_pic) // image en cas d'erreur
+                    .circleCrop()
+                    .into(profileImage);
+        } else {
+            Glide.with(this)
+                    .load(R.drawable.placeholder_profile) // image par défaut
+                    .circleCrop()
+                    .into(profileImage);
+        }
     }
 
     private void setupClickListeners() {
         settingsAccount.setOnClickListener(v -> {
-            // Dans une vraie application, naviguer vers les paramètres du compte
-            Toast.makeText(getContext(), "Paramètres du compte", Toast.LENGTH_SHORT).show();
+            // Naviguer vers les paramètres de compte
+            navigateToAccountSettings();
         });
 
         settingsNotifications.setOnClickListener(v -> {
-            // Dans une vraie application, naviguer vers les paramètres de notifications
-            Toast.makeText(getContext(), "Paramètres de notifications", Toast.LENGTH_SHORT).show();
+            // Naviguer vers les paramètres de notifications
+            navigateToNotificationsSettings();
         });
 
-        darkModeSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            // Dans une vraie application, appliquer le mode sombre
-            String message = isChecked ? "Mode sombre activé" : "Mode sombre désactivé";
-            Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
-            // Appliquer le thème ici
-        });
+
 
         settingsLogout.setOnClickListener(v -> {
-            // Dans une vraie application, déconnexion et retour à l'écran de connexion
+            // ✅ Déconnexion avec AuthManager
+            AuthManager.getInstance(requireContext()).logout();
             Toast.makeText(getContext(), "Déconnexion...", Toast.LENGTH_SHORT).show();
             navigateToLogin();
         });
@@ -103,4 +130,16 @@ public class ProfileFragment extends Fragment {
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
     }
+
+    private void navigateToAccountSettings() {
+        // Implémenter la navigation vers la page des paramètres de compte
+        Toast.makeText(getContext(), "Paramètres du compte", Toast.LENGTH_SHORT).show();
+    }
+
+    private void navigateToNotificationsSettings() {
+        // Implémenter la navigation vers la page des paramètres de notifications
+        Toast.makeText(getContext(), "Paramètres de notifications", Toast.LENGTH_SHORT).show();
+    }
+
+
 }

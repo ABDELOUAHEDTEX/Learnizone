@@ -14,6 +14,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.learnizone.auth.AuthManager;
 import com.google.android.material.textfield.TextInputEditText;
 
 public class SignupActivity extends AppCompatActivity {
@@ -27,6 +28,13 @@ public class SignupActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // ✅ Si déjà connecté, passer direct à MainActivity
+        if (AuthManager.getInstance(this).isLoggedIn()) {
+            navigateToMain();
+            return;
+        }
+
         setContentView(R.layout.activity_signup);
 
         initViews();
@@ -53,7 +61,7 @@ public class SignupActivity extends AppCompatActivity {
         ClickableSpan clickableSpan = new ClickableSpan() {
             @Override
             public void onClick(@NonNull View widget) {
-                finish(); // Retourne à l'écran de connexion (supposant qu'il est derrière dans la pile)
+                finish(); // Retourner à l'écran de connexion
             }
         };
 
@@ -74,9 +82,22 @@ public class SignupActivity extends AppCompatActivity {
             return;
         }
 
-        // Dans une application réelle, cela appellerait un service d'inscription
-        // Pour cette démo, nous retournons à l'écran de connexion avec un message de succès
-        Toast.makeText(this, "Compte créé avec succès ! Veuillez vous connecter.", Toast.LENGTH_LONG).show();
+        // ✅ Enregistrer l'utilisateur simulé avec AuthManager
+        AuthManager.getInstance(this).login(
+                "2", // ID fictif différent de celui du login
+                fullName,
+                email,
+                "https://example.com/default-profile.jpg" // Image par défaut
+        );
+
+        Toast.makeText(this, "Inscription réussie. Bienvenue " + fullName + " !", Toast.LENGTH_LONG).show();
+
+        navigateToMain();
+    }
+
+    private void navigateToMain() {
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
         finish();
     }
 }

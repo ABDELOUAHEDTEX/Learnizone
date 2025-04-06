@@ -14,6 +14,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.learnizone.auth.AuthManager;
 import com.google.android.material.textfield.TextInputEditText;
 
 public class LoginActivity extends AppCompatActivity {
@@ -27,6 +28,13 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // ✅ Rediriger si déjà connecté
+        if (AuthManager.getInstance(this).isLoggedIn()) {
+            navigateToMain();
+            return;
+        }
+
         setContentView(R.layout.activity_login);
 
         initViews();
@@ -46,7 +54,6 @@ public class LoginActivity extends AppCompatActivity {
         loginButton.setOnClickListener(v -> attemptLogin());
 
         forgotPassword.setOnClickListener(v -> {
-            // En réalité, naviguerait vers un écran de récupération de mot de passe
             Toast.makeText(LoginActivity.this, "Fonction de récupération de mot de passe", Toast.LENGTH_SHORT).show();
         });
     }
@@ -78,15 +85,21 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // Dans une application réelle, cela appellerait un service d'authentification
-        // Pour cette démo, nous passons directement à l'écran principal
+        // ✅ Simuler la connexion (à remplacer plus tard par authentification réelle)
+        AuthManager.getInstance(this).login(
+                "1", // id fictif
+                "Utilisateur Test",
+                email,
+                "https://example.com/profile.jpg" // image fictive
+        );
+
         navigateToMain();
     }
 
     private void navigateToMain() {
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent);
-        finish(); // Ferme l'activité de connexion pour éviter le retour en arrière
+        finish(); // évite retour à la page login
     }
 
     private void navigateToSignup() {

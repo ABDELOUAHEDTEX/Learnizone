@@ -1,10 +1,12 @@
 package com.example.learnizone;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
+import com.example.learnizone.auth.AuthManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
@@ -14,8 +16,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
+        // ✅ Vérifie si l'utilisateur est connecté
+        if (!AuthManager.getInstance(this).isLoggedIn()) {
+            redirectToLogin();
+            return;
+        }
+
+        setContentView(R.layout.activity_main);
         bottomNavigationView = findViewById(R.id.bottom_navigation);
 
         setupBottomNavigation();
@@ -26,6 +34,12 @@ public class MainActivity extends AppCompatActivity {
                     .replace(R.id.fragment_container, new LearnFragment())
                     .commit();
         }
+    }
+
+    private void redirectToLogin() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        startActivity(intent);
+        finish(); // Empêche de revenir à cette activité sans se connecter
     }
 
     private void setupBottomNavigation() {
