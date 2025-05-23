@@ -41,4 +41,16 @@
     <string name="categories">Catégories</string>
     <string name="filter">Filtrer</string>
     <string name="sort">Trier</string>
+    <string name="user_type_label">Je suis un :</string>
+    <string name="student_type">Étudiant</string>
+    <string name="instructor_type">Instructeur</string>
+    <string name="password_requirements">Le mot de passe doit contenir au moins 6 caractères</string>
+    <string name="error_fill_all_fields">Veuillez remplir tous les champs</string>
+    <string name="error_select_user_type">Veuillez sélectionner un type d\'utilisateur</string>
+    <string name="signup_success">Inscription réussie. Bienvenue !</string>
+    <string name="forgot_password_title">Mot de passe oublié ?</string>
+    <string name="forgot_password_subtitle">Entrez votre email pour recevoir un lien de réinitialisation</string>
+    <string name="reset_password_button">RÉINITIALISER</string>
+    <string name="back_to_login">Retour à la connexion</string>
+    <string name="reset_password_email_sent">Un email de réinitialisation a été envoyé</string>
 </resources>

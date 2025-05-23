@@ -8,14 +8,18 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.learnizone.auth.AuthManager;
+import com.example.learnizone.viewmodels.AuthViewModel;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.FirebaseUser;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -24,13 +28,23 @@ public class LoginActivity extends AppCompatActivity {
     private Button loginButton;
     private TextView forgotPassword;
     private TextView registerPrompt;
+    private ProgressBar progressBar;
+    private AuthViewModel authViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // ✅ Rediriger si déjà connecté
-        if (AuthManager.getInstance(this).isLoggedIn()) {
+        // Initialiser le ViewModel
+        authViewModel = new ViewModelProvider(this).get(AuthViewModel.class);
+
+        // Observer l'état de l'utilisateur
+        authViewModel.getCurrentUser().observe(this, this::handleAuthStateChange);
+        authViewModel.getAuthError().observe(this, this::handleAuthError);
+        authViewModel.getIsLoading().observe(this, this::handleLoadingState);
+
+        // Vérifier si l'utilisateur est déjà connecté
+        if (authViewModel.getCurrentUser().getValue() != null) {
             navigateToMain();
             return;
         }
@@ -48,13 +62,22 @@ public class LoginActivity extends AppCompatActivity {
         loginButton = findViewById(R.id.login_button);
         forgotPassword = findViewById(R.id.forgot_password);
         registerPrompt = findViewById(R.id.register_prompt);
+        progressBar = findViewById(R.id.progress_bar);
+
+        // Add Firebase test button
+        Button firebaseTestButton = findViewById(R.id.firebase_test_button);
+        firebaseTestButton.setOnClickListener(v -> {
+            Intent intent = new Intent(this, FirebaseTestActivity.class);
+            startActivity(intent);
+        });
     }
 
     private void setupClickListeners() {
         loginButton.setOnClickListener(v -> attemptLogin());
 
         forgotPassword.setOnClickListener(v -> {
-            Toast.makeText(LoginActivity.this, "Fonction de récupération de mot de passe", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, ForgotPasswordActivity.class);
+            startActivity(intent);
         });
     }
 
@@ -85,15 +108,28 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // ✅ Simuler la connexion (à remplacer plus tard par authentification réelle)
-        AuthManager.getInstance(this).login(
-                "1", // id fictif
-                "Utilisateur Test",
-                email,
-                "https://example.com/profile.jpg" // image fictive
-        );
+        authViewModel.signIn(email, password);
+    }
 
-        navigateToMain();
+    private void handleAuthStateChange(FirebaseUser user) {
+        if (user != null) {
+            navigateToMain();
+        }
+    }
+
+    private void handleAuthError(String error) {
+        if (error != null) {
+            Toast.makeText(this, error, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void handleLoadingState(Boolean isLoading) {
+        if (isLoading != null) {
+            progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+            loginButton.setEnabled(!isLoading);
+            emailInput.setEnabled(!isLoading);
+            passwordInput.setEnabled(!isLoading);
+        }
     }
 
     private void navigateToMain() {
