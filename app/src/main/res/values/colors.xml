@@ -1,7 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary">#167464</color>
-    <color name="primary_dark">#115A4E</color>
+    <color name="primary">#1976D2</color>
+    <color name="primary_dark">#1565C0</color>
+    <color name="primary_light">#BBDEFB</color>
+    <color name="accent">#FF4081</color>
+    <color name="primary_text">#212121</color>
+    <color name="secondary_text">#757575</color>
+    <color name="icons">#FFFFFF</color>
+    <color name="divider">#BDBDBD</color>
+    
+    <!-- Status colors -->
+    <color name="status_new">#2196F3</color>
+    <color name="status_in_progress">#FF9800</color>
+    <color name="status_completed">#4CAF50</color>
+    <color name="status_suspended">#F44336</color>
+    <color name="status_expired">#9E9E9E</color>
+    <color name="status_cancelled">#9E9E9E</color>
     <color name="secondary">#FF6D00</color>
     <color name="secondary_dark">#E56200</color>
     <color name="gray_50">#FAFAFA</color>
