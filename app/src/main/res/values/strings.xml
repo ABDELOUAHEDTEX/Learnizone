@@ -53,4 +53,61 @@
     <string name="reset_password_button">RÉINITIALISER</string>
     <string name="back_to_login">Retour à la connexion</string>
     <string name="reset_password_email_sent">Un email de réinitialisation a été envoyé</string>
+
+    <!-- Quiz Strings -->
+    <string name="start_quiz">Commencer le quiz</string>
+    <string name="retry_quiz">Réessayer</string>
+    <string name="view_results">Voir les résultats</string>
+    <string name="max_attempts_reached">Nombre maximum de tentatives atteint</string>
+    <string name="quiz_time_format">Temps: %d min</string>
+    <string name="quiz_passing_score_format">Score minimum: %d%%</string>
+    <string name="quiz_questions_count_format">%d questions</string>
+    <string name="quiz_last_attempt_format">Dernière tentative: %.1f%%</string>
+
+    <!-- Quiz Activity Strings -->
+    <string name="previous">Précédent</string>
+    <string name="next">Suivant</string>
+    <string name="submit">Soumettre</string>
+    <string name="quiz_error_not_found">Erreur : Quiz introuvable</string>
+    <string name="quiz_error_loading">Erreur lors du chargement du quiz</string>
+    <string name="quiz_error_start">Erreur lors du démarrage du quiz</string>
+    <string name="quiz_error_submit">Erreur lors de la soumission</string>
+    <string name="quiz_submit_title">Soumettre le quiz</string>
+    <string name="quiz_submit_message">Êtes-vous sûr de vouloir soumettre le quiz ? Cette action est irréversible.</string>
+    <string name="quiz_submit_unanswered">Vous avez %d question(s) non répondue(s). Êtes-vous sûr de vouloir soumettre le quiz ?</string>
+    <string name="quiz_submit_confirm">Soumettre</string>
+    <string name="quiz_submit_cancel">Continuer</string>
+    <string name="quiz_timeout_title">Temps écoulé</string>
+    <string name="quiz_timeout_message">Le temps imparti pour ce quiz est écoulé. Votre quiz va être soumis automatiquement.</string>
+    <string name="quiz_results_title_success">Félicitations !</string>
+    <string name="quiz_results_title_failed">Quiz terminé</string>
+    <string name="quiz_results_message">Score: %.1f%%\nTemps: %d minutes\n%s</string>
+    <string name="quiz_results_success">Vous avez réussi le quiz !</string>
+    <string name="quiz_results_failed">Vous pouvez réessayer si autorisé.</string>
+    <string name="quiz_results_view">Voir les résultats</string>
+    <string name="quiz_results_close">Fermer</string>
+    <string name="quiz_exit_title">Quitter le quiz</string>
+    <string name="quiz_exit_message">Êtes-vous sûr de vouloir quitter ? Votre progression sera perdue.</string>
+    <string name="quiz_exit_confirm">Quitter</string>
+    <string name="quiz_exit_cancel">Continuer</string>
+
+    <!-- Question Fragment Strings -->
+    <string name="true_option">Vrai</string>
+    <string name="false_option">Faux</string>
+    <string name="your_answer">Votre réponse</string>
+    <string name="drag_to_match">Faites glisser pour associer</string>
+    <string name="question_points_format">%d points</string>
+    <string name="question_number_format">Question %d</string>
+
+    <!-- Lesson List -->
+    <string name="course_progress">Progression du cours</string>
+    <string name="download_all_lessons">Télécharger toutes les leçons</string>
+    <string name="lesson_type_icon">Icône du type de leçon</string>
+    <string name="lesson_status">Statut de la leçon</string>
+    <string name="lesson_duration_format">%d minutes</string>
+    <string name="lesson_progress_format">%d%% complété</string>
+    <string name="lesson_locked">Leçon verrouillée</string>
+    <string name="lesson_completed">Leçon terminée</string>
+    <string name="lesson_in_progress">En cours</string>
+    <string name="lesson_not_started">Non commencé</string>
 </resources>
