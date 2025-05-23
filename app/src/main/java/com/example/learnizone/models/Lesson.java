@@ -1,6 +1,7 @@
 package com.example.learnizone.models;
 
 import com.google.firebase.firestore.DocumentSnapshot;
+import android.util.Patterns;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -8,46 +9,39 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class Lesson implements Serializable {
-    private String lessonId;
+    private static final Pattern SPECIAL_CHARS_PATTERN = Pattern.compile("[<>\"'&]");
+    private static final int MAX_TITLE_LENGTH = 100;
+    private static final int MAX_DESCRIPTION_LENGTH = 1000;
+    private static final int MAX_RESOURCES = 20;
+
+    private String id;
     private String courseId;
-    private String sectionId;
     private String title;
     private String description;
     private LessonType type;
-    private String content; // Contenu textuel ou HTML
-    private String videoUrl;
-    private String audioUrl;
+    private int order;
+    private int durationMinutes;
+    private String contentUrl;
     private List<LessonResource> resources;
-    private int duration; // Durée en minutes
-    private int orderIndex;
-    private boolean isPublished;
-    private boolean isFree; // Leçon gratuite ou payante
+    private boolean isLocked;
+    private String prerequisiteLessonId;
     private Date createdAt;
     private Date updatedAt;
     private Map<String, Object> metadata;
 
     public enum LessonType {
-        VIDEO("video", "Vidéo"),
-        AUDIO("audio", "Audio"),
-        TEXT("text", "Texte"),
-        INTERACTIVE("interactive", "Interactif"),
-        QUIZ("quiz", "Quiz"),
-        ASSIGNMENT("assignment", "Devoir"),
-        LIVE_SESSION("live_session", "Session en direct"),
-        DOCUMENT("document", "Document");
+        VIDEO("Vidéo"),
+        TEXT("Texte"),
+        AUDIO("Audio"),
+        QUIZ("Quiz");
 
-        private final String value;
         private final String displayName;
 
-        LessonType(String value, String displayName) {
-            this.value = value;
+        LessonType(String displayName) {
             this.displayName = displayName;
-        }
-
-        public String getValue() {
-            return value;
         }
 
         public String getDisplayName() {
@@ -55,12 +49,11 @@ public class Lesson implements Serializable {
         }
 
         public static LessonType fromString(String value) {
-            for (LessonType type : values()) {
-                if (type.value.equals(value)) {
-                    return type;
-                }
+            try {
+                return valueOf(value);
+            } catch (IllegalArgumentException e) {
+                return null;
             }
-            return TEXT;
         }
     }
 
@@ -68,122 +61,260 @@ public class Lesson implements Serializable {
         this.resources = new ArrayList<>();
         this.createdAt = new Date();
         this.updatedAt = new Date();
-        this.isPublished = true;
-        this.isFree = false;
         this.metadata = new HashMap<>();
+        this.order = 0;
+        this.durationMinutes = 0;
+        this.isLocked = false;
     }
 
     public static Lesson fromDocument(DocumentSnapshot document) {
-        Lesson lesson = new Lesson();
-        lesson.lessonId = document.getId();
-        lesson.courseId = document.getString("courseId");
-        lesson.sectionId = document.getString("sectionId");
-        lesson.title = document.getString("title");
-        lesson.description = document.getString("description");
-        lesson.type = LessonType.fromString(document.getString("type"));
-        lesson.content = document.getString("content");
-        lesson.videoUrl = document.getString("videoUrl");
-        lesson.audioUrl = document.getString("audioUrl");
+        if (document == null || !document.exists()) {
+            return null;
+        }
 
-        Long duration = document.getLong("duration");
-        lesson.duration = duration != null ? duration.intValue() : 0;
+        try {
+            Lesson lesson = new Lesson();
+            lesson.id = document.getId();
+            lesson.courseId = document.getString("courseId");
+            lesson.title = document.getString("title");
+            lesson.description = document.getString("description");
+            
+            String typeStr = document.getString("type");
+            lesson.type = typeStr != null ? LessonType.fromString(typeStr) : null;
+            
+            Long order = document.getLong("order");
+            lesson.order = order != null ? order.intValue() : 0;
+            
+            Long duration = document.getLong("durationMinutes");
+            lesson.durationMinutes = duration != null ? duration.intValue() : 0;
+            
+            lesson.contentUrl = document.getString("contentUrl");
+            lesson.isLocked = document.getBoolean("isLocked") != null ? document.getBoolean("isLocked") : false;
+            lesson.prerequisiteLessonId = document.getString("prerequisiteLessonId");
 
-        Long orderIndex = document.getLong("orderIndex");
-        lesson.orderIndex = orderIndex != null ? orderIndex.intValue() : 0;
+            List<Map<String, Object>> resourcesData = (List<Map<String, Object>>) document.get("resources");
+            if (resourcesData != null) {
+                for (Map<String, Object> resourceData : resourcesData) {
+                    try {
+                        LessonResource resource = new LessonResource();
+                        resource.setTitle((String) resourceData.get("title"));
+                        String resourceType = (String) resourceData.get("type");
+                        if (resourceType != null) {
+                            resource.setType(LessonResource.ResourceType.valueOf(resourceType));
+                        }
+                        resource.setUrl((String) resourceData.get("url"));
+                        if (resource.isValid()) {
+                            lesson.resources.add(resource);
+                        }
+                    } catch (Exception e) {
+                        // Log error but continue processing other resources
+                        e.printStackTrace();
+                    }
+                }
+            }
 
-        Boolean isPublished = document.getBoolean("isPublished");
-        lesson.isPublished = isPublished != null ? isPublished : true;
+            Date createdAt = document.getDate("createdAt");
+            lesson.createdAt = createdAt != null ? createdAt : new Date();
+            
+            Date updatedAt = document.getDate("updatedAt");
+            lesson.updatedAt = updatedAt != null ? updatedAt : lesson.createdAt;
 
-        Boolean isFree = document.getBoolean("isFree");
-        lesson.isFree = isFree != null ? isFree : false;
+            Map<String, Object> metadata = (Map<String, Object>) document.get("metadata");
+            lesson.metadata = metadata != null ? metadata : new HashMap<>();
 
-        lesson.createdAt = document.getDate("createdAt");
-        lesson.updatedAt = document.getDate("updatedAt");
-
-        Map<String, Object> metadata = (Map<String, Object>) document.get("metadata");
-        lesson.metadata = metadata != null ? metadata : new HashMap<>();
-
-        return lesson;
+            return lesson;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public Map<String, Object> toMap() {
         Map<String, Object> map = new HashMap<>();
         map.put("courseId", courseId);
-        map.put("sectionId", sectionId);
         map.put("title", title);
         map.put("description", description);
-        map.put("type", type.getValue());
-        map.put("content", content);
-        map.put("videoUrl", videoUrl);
-        map.put("audioUrl", audioUrl);
-        map.put("duration", duration);
-        map.put("orderIndex", orderIndex);
-        map.put("isPublished", isPublished);
-        map.put("isFree", isFree);
+        map.put("type", type != null ? type.name() : null);
+        map.put("order", order);
+        map.put("durationMinutes", durationMinutes);
+        map.put("contentUrl", contentUrl);
+        map.put("isLocked", isLocked);
+        map.put("prerequisiteLessonId", prerequisiteLessonId);
         map.put("createdAt", createdAt);
         map.put("updatedAt", updatedAt);
         map.put("metadata", metadata);
+
+        List<Map<String, Object>> resourcesData = new ArrayList<>();
+        for (LessonResource resource : resources) {
+            if (resource.isValid()) {
+                resourcesData.add(resource.toMap());
+            }
+        }
+        map.put("resources", resourcesData);
+
         return map;
     }
 
-    // Getters et Setters
-    public String getLessonId() { return lessonId; }
-    public void setLessonId(String lessonId) { this.lessonId = lessonId; }
+    // Getters and Setters
+    public String getId() {
+        return id;
+    }
 
-    public String getCourseId() { return courseId; }
-    public void setCourseId(String courseId) { this.courseId = courseId; }
+    public void setId(String id) {
+        this.id = id;
+    }
 
-    public String getSectionId() { return sectionId; }
-    public void setSectionId(String sectionId) { this.sectionId = sectionId; }
+    public String getCourseId() {
+        return courseId;
+    }
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public void setCourseId(String courseId) {
+        this.courseId = courseId;
+    }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public String getTitle() {
+        return title;
+    }
 
-    public LessonType getType() { return type; }
-    public void setType(LessonType type) { this.type = type; }
+    public void setTitle(String title) {
+        if (title != null) {
+            title = title.trim();
+            if (title.length() > MAX_TITLE_LENGTH) {
+                title = title.substring(0, MAX_TITLE_LENGTH);
+            }
+            if (SPECIAL_CHARS_PATTERN.matcher(title).find()) {
+                throw new IllegalArgumentException("Title contains invalid special characters");
+            }
+        }
+        this.title = title;
+    }
 
-    public String getContent() { return content; }
-    public void setContent(String content) { this.content = content; }
+    public String getDescription() {
+        return description;
+    }
 
-    public String getVideoUrl() { return videoUrl; }
-    public void setVideoUrl(String videoUrl) { this.videoUrl = videoUrl; }
+    public void setDescription(String description) {
+        if (description != null) {
+            description = description.trim();
+            if (description.length() > MAX_DESCRIPTION_LENGTH) {
+                description = description.substring(0, MAX_DESCRIPTION_LENGTH);
+            }
+            if (SPECIAL_CHARS_PATTERN.matcher(description).find()) {
+                throw new IllegalArgumentException("Description contains invalid special characters");
+            }
+        }
+        this.description = description;
+    }
 
-    public String getAudioUrl() { return audioUrl; }
-    public void setAudioUrl(String audioUrl) { this.audioUrl = audioUrl; }
+    public LessonType getType() {
+        return type;
+    }
 
-    public List<LessonResource> getResources() { return resources; }
-    public void setResources(List<LessonResource> resources) { this.resources = resources; }
+    public void setType(LessonType type) {
+        this.type = type;
+    }
 
-    public int getDuration() { return duration; }
-    public void setDuration(int duration) { this.duration = duration; }
+    public int getOrder() {
+        return order;
+    }
 
-    public int getOrderIndex() { return orderIndex; }
-    public void setOrderIndex(int orderIndex) { this.orderIndex = orderIndex; }
+    public void setOrder(int order) {
+        if (order < 0) {
+            throw new IllegalArgumentException("Order cannot be negative");
+        }
+        this.order = order;
+    }
 
-    public boolean isPublished() { return isPublished; }
-    public void setPublished(boolean published) { isPublished = published; }
+    public int getDurationMinutes() {
+        return durationMinutes;
+    }
 
-    public boolean isFree() { return isFree; }
-    public void setFree(boolean free) { isFree = free; }
+    public void setDurationMinutes(int durationMinutes) {
+        if (durationMinutes < 0) {
+            throw new IllegalArgumentException("Duration cannot be negative");
+        }
+        this.durationMinutes = durationMinutes;
+    }
 
-    public Date getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
+    public String getContentUrl() {
+        return contentUrl;
+    }
 
-    public Date getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(Date updatedAt) { this.updatedAt = updatedAt; }
+    public void setContentUrl(String contentUrl) {
+        if (contentUrl != null && !contentUrl.trim().isEmpty()) {
+            if (!Patterns.WEB_URL.matcher(contentUrl).matches()) {
+                throw new IllegalArgumentException("Invalid content URL format");
+            }
+        }
+        this.contentUrl = contentUrl;
+    }
 
-    public Map<String, Object> getMetadata() { return metadata; }
-    public void setMetadata(Map<String, Object> metadata) { this.metadata = metadata; }
+    public List<LessonResource> getResources() {
+        return resources;
+    }
 
-    // Méthodes utiles
+    public void setResources(List<LessonResource> resources) {
+        if (resources != null && resources.size() > MAX_RESOURCES) {
+            throw new IllegalArgumentException("Maximum number of resources exceeded");
+        }
+        this.resources = resources;
+    }
+
+    public boolean isLocked() {
+        return isLocked;
+    }
+
+    public void setLocked(boolean locked) {
+        isLocked = locked;
+    }
+
+    public String getPrerequisiteLessonId() {
+        return prerequisiteLessonId;
+    }
+
+    public void setPrerequisiteLessonId(String prerequisiteLessonId) {
+        this.prerequisiteLessonId = prerequisiteLessonId;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        if (createdAt == null) {
+            throw new IllegalArgumentException("Created date cannot be null");
+        }
+        this.createdAt = createdAt;
+    }
+
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Date updatedAt) {
+        if (updatedAt == null) {
+            throw new IllegalArgumentException("Updated date cannot be null");
+        }
+        if (createdAt != null && updatedAt.before(createdAt)) {
+            throw new IllegalArgumentException("Updated date cannot be before created date");
+        }
+        this.updatedAt = updatedAt;
+    }
+
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata != null ? metadata : new HashMap<>();
+    }
+
+    // Utility methods
     public String getFormattedDuration() {
-        if (duration <= 0) return "N/A";
+        if (durationMinutes <= 0) return "N/A";
         
-        int hours = duration / 60;
-        int minutes = duration % 60;
+        int hours = durationMinutes / 60;
+        int minutes = durationMinutes % 60;
         
         if (hours > 0) {
             return String.format("%dh %02dmin", hours, minutes);
@@ -193,10 +324,68 @@ public class Lesson implements Serializable {
     }
 
     public boolean hasVideo() {
-        return videoUrl != null && !videoUrl.trim().isEmpty();
+        return type == LessonType.VIDEO && contentUrl != null && !contentUrl.trim().isEmpty();
     }
 
     public boolean hasAudio() {
-        return audioUrl != null && !audioUrl.trim().isEmpty();
+        return type == LessonType.AUDIO && contentUrl != null && !contentUrl.trim().isEmpty();
+    }
+
+    public boolean isValid() {
+        if (id == null || id.trim().isEmpty()) return false;
+        if (courseId == null || courseId.trim().isEmpty()) return false;
+        if (title == null || title.trim().isEmpty()) return false;
+        if (title.length() > MAX_TITLE_LENGTH) return false;
+        if (description != null && description.length() > MAX_DESCRIPTION_LENGTH) return false;
+        if (type == null) return false;
+        if (order < 0) return false;
+        if (durationMinutes < 0) return false;
+        if (contentUrl != null && !contentUrl.trim().isEmpty() && !Patterns.WEB_URL.matcher(contentUrl).matches()) return false;
+        if (createdAt == null) return false;
+        if (updatedAt == null) return false;
+        if (updatedAt.before(createdAt)) return false;
+        if (resources.size() > MAX_RESOURCES) return false;
+        
+        // Validate resources
+        for (LessonResource resource : resources) {
+            if (!resource.isValid()) return false;
+        }
+        
+        return true;
+    }
+
+    public void addResource(LessonResource resource) {
+        if (resource != null && resource.isValid()) {
+            if (resources.size() >= MAX_RESOURCES) {
+                throw new IllegalStateException("Maximum number of resources reached");
+            }
+            resources.add(resource);
+        }
+    }
+
+    public void removeResource(LessonResource resource) {
+        if (resource != null) {
+            resources.remove(resource);
+        }
+    }
+
+    public void clearResources() {
+        resources.clear();
+    }
+
+    public void addMetadata(String key, Object value) {
+        if (key != null && !key.trim().isEmpty() && value != null) {
+            metadata.put(key, value);
+        }
+    }
+
+    public void removeMetadata(String key) {
+        if (key != null) {
+            metadata.remove(key);
+        }
+    }
+
+    public void clearMetadata() {
+        metadata.clear();
     }
 } 

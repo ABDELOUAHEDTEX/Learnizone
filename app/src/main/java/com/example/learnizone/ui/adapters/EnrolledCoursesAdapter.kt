@@ -52,7 +52,7 @@ class EnrolledCoursesAdapter(
                 textCourseTitle.text = "Course ${enrollment.courseId}"
                 textProgress.text = "${(enrollment.progress * 100).toInt()}%"
                 progressBar.progress = (enrollment.progress * 100).toInt()
-                textStatus.text = enrollment.status.name
+                chipStatus.text = enrollment.status.name
             }
         }
     }

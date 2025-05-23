@@ -242,4 +242,4 @@ public class MyCoursesAdapter extends ListAdapter<Enrollment, MyCoursesAdapter.C
             popup.show();
         }
     }
-} 
+}

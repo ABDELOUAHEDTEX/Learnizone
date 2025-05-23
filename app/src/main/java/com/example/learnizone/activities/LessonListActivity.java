@@ -183,4 +183,4 @@ public class LessonListActivity extends AppCompatActivity implements LessonAdapt
         }
         return super.onOptionsItemSelected(item);
     }
-} 
+}
