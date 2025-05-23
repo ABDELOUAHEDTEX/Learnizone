@@ -1,0 +1,28 @@
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph" >
+
+    <fragment
+        android:id="@+id/myCoursesFragment"
+        android:name="com.example.learnizone.ui.fragments.MyCoursesFragment"
+        android:label="MyCoursesFragment" >
+        <action
+            android:id="@+id/action_myCoursesFragment_to_browseCoursesFragment"
+            app:destination="@id/browseCoursesFragment" />
+        <action
+            android:id="@+id/action_myCoursesFragment_to_courseDetailsActivity"
+            app:destination="@id/courseDetailsActivity" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/browseCoursesFragment"
+        android:name="com.example.learnizone.ui.fragments.BrowseCoursesFragment"
+        android:label="BrowseCoursesFragment" />
+
+    <activity
+        android:id="@+id/courseDetailsActivity"
+        android:name="com.example.learnizone.ui.activities.CourseDetailsActivity"
+        android:label="CourseDetailsActivity" />
+
+</navigation> 

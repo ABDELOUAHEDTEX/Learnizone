@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.learnizone.databinding.ItemEnrolledCourseBinding
 import com.example.learnizone.models.Enrollment
+import com.example.learnizone.R
 
 class MyCoursesAdapter(
     private val onCourseClick: (Enrollment) -> Unit,

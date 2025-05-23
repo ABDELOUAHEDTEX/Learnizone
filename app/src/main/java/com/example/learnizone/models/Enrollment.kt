@@ -1,7 +1,12 @@
 package com.example.learnizone.models
 
+import android.os.Parcelable
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.ServerTimestamp
+import kotlinx.parcelize.Parcelize
 import java.util.Date
+import java.util.concurrent.TimeUnit
+import com.google.firebase.firestore.FieldValue
 
 data class Enrollment(
     val enrollmentId: String = "",

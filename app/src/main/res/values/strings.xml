@@ -100,6 +100,8 @@
     <string name="question_number_format">Question %d</string>
 
     <!-- Lesson List -->
+    <string name="lessons">Leçons</string>
+    <string name="no_lessons_available">Aucune leçon disponible</string>
     <string name="course_progress">Progression du cours</string>
     <string name="download_all_lessons">Télécharger toutes les leçons</string>
     <string name="lesson_type_icon">Icône du type de leçon</string>

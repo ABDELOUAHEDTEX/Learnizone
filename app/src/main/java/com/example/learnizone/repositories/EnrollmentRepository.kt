@@ -2,14 +2,17 @@ package com.example.learnizone.repositories
 
 import com.example.learnizone.models.Enrollment
 import com.example.learnizone.models.EnrollmentStatus
+import com.example.learnizone.models.UserCourses
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
-class EnrollmentRepository {
+class EnrollmentRepository(private val coroutineScope: CoroutineScope) {
     private val db = FirebaseFirestore.getInstance()
     private val enrollmentsCollection = db.collection("enrollments")
     private val userCoursesCollection = db.collection("user_courses")
@@ -18,14 +21,16 @@ class EnrollmentRepository {
         val enrollment = Enrollment(
             userId = userId,
             courseId = courseId,
-            status = EnrollmentStatus.PENDING
+            status = EnrollmentStatus.ACTIVE
         )
 
         enrollmentsCollection.add(enrollment)
             .addOnSuccessListener { documentReference ->
                 val newEnrollment = enrollment.copy(enrollmentId = documentReference.id)
-                updateUserCourses(userId, courseId, true)
-                continuation.resume(Result.success(newEnrollment))
+                coroutineScope.launch {
+                    updateUserCourses(userId, courseId, true)
+                    continuation.resume(Result.success(newEnrollment))
+                }
             }
             .addOnFailureListener { e ->
                 continuation.resume(Result.failure(e))
@@ -34,9 +39,11 @@ class EnrollmentRepository {
 
     suspend fun cancelEnrollment(enrollmentId: String): Result<Unit> = suspendCoroutine { continuation ->
         enrollmentsCollection.document(enrollmentId)
-            .update("status", EnrollmentStatus.CANCELLED)
+            .update("status", EnrollmentStatus.CANCELLED.value)
             .addOnSuccessListener {
-                continuation.resume(Result.success(Unit))
+                coroutineScope.launch {
+                    continuation.resume(Result.success(Unit))
+                }
             }
             .addOnFailureListener { e ->
                 continuation.resume(Result.failure(e))
@@ -46,7 +53,7 @@ class EnrollmentRepository {
     suspend fun getUserEnrollments(userId: String): Result<List<Enrollment>> = suspendCoroutine { continuation ->
         enrollmentsCollection
             .whereEqualTo("userId", userId)
-            .whereNotEqualTo("status", EnrollmentStatus.CANCELLED)
+            .whereNotEqualTo("status", EnrollmentStatus.CANCELLED.value)
             .get()
             .addOnSuccessListener { documents ->
                 val enrollments = documents.mapNotNull { it.toObject(Enrollment::class.java) }
@@ -62,7 +69,7 @@ class EnrollmentRepository {
         
         db.runTransaction { transaction ->
             val snapshot = transaction.get(userCoursesRef)
-            val userCourses = snapshot.toObject(UserCourses::class.java) ?: UserCourses(userId = userId)
+            val userCourses = snapshot.toObject(UserCourses::class.java) ?: UserCourses(userId = userId, enrolledCourses = emptyList())
             
             val updatedEnrolledCourses = if (isEnrolling) {
                 userCourses.enrolledCourses + courseId
@@ -76,7 +83,7 @@ class EnrollmentRepository {
 
     suspend fun updateEnrollmentProgress(enrollmentId: String, progress: Double): Result<Unit> = suspendCoroutine { continuation ->
         enrollmentsCollection.document(enrollmentId)
-            .update("progress", progress)
+            .update("progress", progress.coerceIn(0.0, 1.0))
             .addOnSuccessListener {
                 continuation.resume(Result.success(Unit))
             }
